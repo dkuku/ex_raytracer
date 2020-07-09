@@ -23,9 +23,60 @@ defmodule Raytracer.Matrix do
     |> Map.new()
   end
 
-  def val_at(m, x, y), do: Map.get(m, {x, y})
-  def val_at(m, [x, y]), do: Map.get(m, {x, y})
-  def val_at(m, {x, y}), do: Map.get(m, {x, y})
+  def translation(x, y, z) do
+    matrix(:identity, 4)
+    |> set_at({0, 3}, x)
+    |> set_at({1, 3}, y)
+    |> set_at({2, 3}, z)
+  end
+
+  def scaling(x, y, z) do
+    matrix(:identity, 4)
+    |> set_at({0, 0}, x)
+    |> set_at({1, 1}, y)
+    |> set_at({2, 2}, z)
+  end
+
+  def rotation_x(r) do
+    matrix(:identity, 4)
+    |> set_at({1, 1}, :math.cos(r))
+    |> set_at({2, 2}, :math.cos(r))
+    |> set_at({1, 2}, :math.sin(r) * -1)
+    |> set_at({2, 1}, :math.sin(r))
+  end
+
+  def rotation_y(r) do
+    matrix(:identity, 4)
+    |> set_at({0, 0}, :math.cos(r))
+    |> set_at({2, 2}, :math.cos(r))
+    |> set_at({2, 0}, :math.sin(r) * -1)
+    |> set_at({0, 2}, :math.sin(r))
+  end
+
+  def rotation_z(r) do
+    matrix(:identity, 4)
+    |> set_at({0, 0}, :math.cos(r))
+    |> set_at({1, 1}, :math.cos(r))
+    |> set_at({0, 1}, :math.sin(r) * -1)
+    |> set_at({1, 0}, :math.sin(r))
+  end
+
+  def shearing(xy, xz, yx, yz, zx, zy) do
+    matrix(:identity, 4)
+    |> set_at({0, 1}, xy)
+    |> set_at({0, 2}, xz)
+    |> set_at({1, 0}, yx)
+    |> set_at({1, 2}, yz)
+    |> set_at({2, 0}, zx)
+    |> set_at({2, 1}, zy)
+  end
+
+  def set_at(m, x, y, val), do: Map.put(m, {x, y}, val)
+  def set_at(m, [x, y], val), do: Map.put(m, {x, y}, val)
+  def set_at(m, {x, y}, val), do: Map.put(m, {x, y}, val)
+  def get_at(m, x, y), do: Map.get(m, {x, y})
+  def get_at(m, [x, y]), do: Map.get(m, {x, y})
+  def get_at(m, {x, y}), do: Map.get(m, {x, y})
 
   def mul(m1, m2) when is_map(m1) and is_map(m2) do
     for x <- 0..3, y <- 0..3 do

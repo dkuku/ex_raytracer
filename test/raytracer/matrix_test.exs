@@ -3,6 +3,8 @@ defmodule Raytracer.MatrixTest do
 
   import Raytracer.Matrix
   alias Raytracer.Vector
+  @pi :math.pi()
+  @sqrt_2 :math.sqrt(2)
 
   test "create a 4x4 matrix" do
     m = matrix([[1, 2, 3, 4], [5.5, 6.5, 7.5, 8.5], [9, 10, 11, 12], [13.5, 14.5, 15.5, 16.5]])
@@ -243,9 +245,9 @@ defmodule Raytracer.MatrixTest do
     b = inverse(a)
     assert determinant(a) == 532
     assert cofactor(a, 2, 3) == -160
-    assert val_at(b, [3, 2]) == -160 / 532
+    assert get_at(b, [3, 2]) == -160 / 532
     assert cofactor(a, 3, 2) == 105
-    assert val_at(b, [2, 3]) == 105 / 532
+    assert get_at(b, [2, 3]) == 105 / 532
 
     assert b ==
              matrix([
@@ -345,5 +347,148 @@ defmodule Raytracer.MatrixTest do
                  0.3333333333333333
                ]
              ])
+  end
+
+  test " Multiplying by a translation matrix" do
+    transform = translation(5, -3, 2)
+    p = Vector.point(-3, 4, 5)
+    assert mul(transform, p) == Vector.point(2, 1, 7)
+  end
+
+  test " Multiplying by the inverse of a translation matrix" do
+    transform = translation(5, -3, 2)
+    inv = inverse(transform)
+    p = Vector.point(-3, 4, 5)
+    assert mul(inv, p) == Vector.point(-8, 7, 3)
+  end
+
+  test "translation does not affect vectors" do
+    transform = translation(5, -3, 2)
+    t = Vector.vector(-3, 4, 5)
+    assert mul(transform, t) == t
+  end
+
+  test " A scaling matrix applied to a point" do
+    transform = scaling(2, 3, 4)
+    p = Vector.point(-4, 6, 8)
+    assert mul(transform, p) == Vector.point(-8, 18, 32)
+  end
+
+  test " A scaling matrix applied to a vector" do
+    transform = scaling(2, 3, 4)
+    v = Vector.vector(-4, 6, 8)
+    assert mul(transform, v) == Vector.vector(-8, 18, 32)
+  end
+
+  test " Multiplying by the inverse of a scaling matrix" do
+    transform = scaling(2, 3, 4)
+    inv = inverse(transform)
+    v = Vector.vector(-4, 6, 8)
+    assert mul(inv, v) == Vector.vector(-2, 2, 2)
+  end
+
+  test " Reflection is scaling by a negative value" do
+    transform = scaling(-1, 1, 1)
+    p = Vector.point(2, 3, 4)
+    assert mul(transform, p) == Vector.point(-2, 3, 4)
+  end
+
+  test "Rotating a point around the x axis" do
+    p = Vector.point(0, 1, 0)
+    half_quarter = rotation_x(@pi / 4)
+    full_quarter = rotation_x(@pi / 2)
+    assert_vector_same(mul(half_quarter, p), Vector.point(0, @sqrt_2 / 2, @sqrt_2 / 2))
+    assert_vector_same(mul(full_quarter, p), Vector.point(0, 0, 1))
+  end
+
+  test "The inverse of an x-rotation rotates in the opposite direction" do
+    p = Vector.point(0, 1, 0)
+    half_quarter = rotation_x(@pi / 4)
+    inv = inverse(half_quarter)
+    assert_vector_same(mul(inv, p), Vector.point(0, @sqrt_2 / 2, -@sqrt_2 / 2))
+  end
+
+  test "Rotating a point around the y axis" do
+    p = Vector.point(0, 0, 1)
+    half_quarter = rotation_y(@pi / 4)
+    full_quarter = rotation_y(@pi / 2)
+    assert_vector_same(mul(half_quarter, p), Vector.point(@sqrt_2 / 2, 0, @sqrt_2 / 2))
+    assert_vector_same(mul(full_quarter, p), Vector.point(1, 0, 0))
+  end
+
+  test "Rotating a point around the z axis" do
+    p = Vector.point(0, 1, 0)
+    half_quarter = rotation_z(@pi / 4)
+    full_quarter = rotation_z(@pi / 2)
+    assert_vector_same(mul(half_quarter, p), Vector.point(-@sqrt_2 / 2, @sqrt_2 / 2, 0))
+    assert_vector_same(mul(full_quarter, p), Vector.point(-1, 0, 0))
+  end
+
+  test "A shearing transformation moves x in proportion to y" do
+    transform = shearing(1, 0, 0, 0, 0, 0)
+    p = Vector.point(2, 3, 4)
+    assert_vector_same(mul(transform, p), Vector.point(5, 3, 4))
+  end
+
+  test "A shearing transformation moves x in proportion to z" do
+    transform = shearing(0, 1, 0, 0, 0, 0)
+    p = Vector.point(2, 3, 4)
+    assert_vector_same(mul(transform, p), Vector.point(6, 3, 4))
+  end
+
+  test "A shearing transformation moves y in proportion to x" do
+    transform = shearing(0, 0, 1, 0, 0, 0)
+    p = Vector.point(2, 3, 4)
+    assert_vector_same(mul(transform, p), Vector.point(2, 5, 4))
+  end
+
+  test "A shearing transformation moves y in proportion to z" do
+    transform = shearing(0, 0, 0, 1, 0, 0)
+    p = Vector.point(2, 3, 4)
+    assert_vector_same(mul(transform, p), Vector.point(2, 7, 4))
+  end
+
+  test "A shearing transformation moves z in proportion to x" do
+    transform = shearing(0, 0, 0, 0, 1, 0)
+    p = Vector.point(2, 3, 4)
+    assert_vector_same(mul(transform, p), Vector.point(2, 3, 6))
+  end
+
+  test "A shearing transformation moves z in proportion to y" do
+    transform = shearing(0, 0, 0, 0, 0, 1)
+    p = Vector.point(2, 3, 4)
+    assert_vector_same(mul(transform, p), Vector.point(2, 3, 7))
+  end
+
+  test " Individual transformations are applied in sequence" do
+    p = Vector.point(1, 0, 1)
+    a = rotation_x(@pi / 2)
+    b = scaling(5, 5, 5)
+    c = translation(10, 5, 7)
+    # apply rotation first
+    p2 = mul(a, p)
+    assert_vector_same(p2, Vector.point(1, -1, 0))
+    # then apply scaling
+    p3 = mul(b, p2)
+    assert_vector_same(p3, Vector.point(5, -5, 0))
+    # then apply translation
+    p4 = mul(c, p3)
+    assert_vector_same(p4, Vector.point(15, 0, 7))
+  end
+
+  test " Chained transformations must be applied in reverse order " do
+    p = Vector.point(1, 0, 1)
+    a = rotation_x(@pi / 2)
+    b = scaling(5, 5, 5)
+    c = translation(10, 5, 7)
+    t = c |> mul(b) |> mul(a)
+    assert_vector_same(mul(t, p), Vector.point(15, 0, 7))
+  end
+
+  defp assert_vector_same({x1, y1, z1, w1}, {x2, y2, z2, w2}, delta \\ 0.000001) do
+    assert_in_delta(x1, x2, delta)
+    assert_in_delta(y1, y2, delta)
+    assert_in_delta(z1, z2, delta)
+    assert_in_delta(w1, w2, delta)
   end
 end
