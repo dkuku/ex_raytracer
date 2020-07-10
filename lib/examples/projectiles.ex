@@ -2,9 +2,9 @@ defmodule Projectile do
   import Raytracer.Vector
   import Raytracer.Canvas
 
-  def new(velocity), do: projectile({0, 0, 0}, velocity)
+  def new(velocity), do: projectile({0, 0, 0, 0}, velocity)
 
-  def projectile({x, y, z}, velocity) when y < 0, do: {{x, 0, z}, velocity}
+  def projectile({x, y, z, w}, velocity) when y < 0, do: {{x, 0, z, w}, velocity}
   def projectile(position, velocity), do: {position, velocity}
 
   def projectile_position({position, velocity}, env) do
@@ -22,7 +22,7 @@ defmodule Projectile do
     velocity =
       vector(1, 1.8, 0)
       |> normalize()
-      |> cmul(multipler)
+      |> mul(multipler)
       |> IO.inspect()
 
     p = projectile(start, velocity)
@@ -35,19 +35,19 @@ defmodule Projectile do
 
     Stream.unfold(p, fn {pos, vel} ->
       if elem(pos, 1) > 0 do
-        IO.puts("runing")
+        IO.puts("running")
         IO.inspect(pos)
-        new_position = projectile_position({pos, vel}, e)
-        {pos, new_position}
+        new_projectile = projectile_position({pos, vel}, e)
+        {pos, new_projectile}
       else
         IO.puts("stop")
         nil
       end
     end)
     |> Enum.to_list()
-    |> Enum.map(fn {x, y, _z} -> {trunc(x), trunc(y)} end)
+    |> Enum.map(fn {x, y, _z, _w} -> {trunc(x), trunc(y)} end)
     |> IO.inspect()
-    |> Raytracer.Canvas.fill_path(c)
+    |> Raytracer.Canvas.fill_big_path(c)
     |> Raytracer.Canvas.write("projectile.ppm")
   end
 end

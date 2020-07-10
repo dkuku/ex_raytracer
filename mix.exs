@@ -21,6 +21,12 @@ defmodule Raytracer.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-       [{:git_hooks, "~> 0.5.0", only: [:test, :dev], runtime: false}]
+    [
+      {:git_hooks, "~> 0.5.0", only: [:test, :dev], runtime: false},
+      {:credo, "~> 1.4.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0.0", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.10", only: :test}
+    ]
   end
 end

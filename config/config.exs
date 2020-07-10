@@ -1,3 +1,5 @@
+use Mix.Config
+
 if Mix.env() != :prod do
   config :git_hooks,
     auto_install: true,
@@ -12,7 +14,6 @@ if Mix.env() != :prod do
         verbose: false,
         tasks: [
           {:cmd, "mix dialyzer"},
-          {:cmd, "mix credo"},
           {:cmd, "mix test"},
           {:cmd, "echo 'success!'"}
         ]

@@ -33,6 +33,17 @@ defmodule Raytracer.Canvas do
   def set_pixel(canvas, _x, _y, _color), do: canvas
   def set_pixel(canvas, {x, y}, color), do: set_pixel(canvas, x, y, color)
 
+  def set_big_pixel(canvas, x, y, color), do: set_big_pixel(canvas, {x, y}, color)
+
+  def set_big_pixel(canvas, {row, col}, color) do
+    for x <- (row - 1)..(row + 1), y <- (col - 1)..(col + 1) do
+      {x, y}
+    end
+    |> Enum.reduce(canvas, fn coord, acc ->
+      set_pixel(acc, coord, color)
+    end)
+  end
+
   def cast_color(c) when c < 0, do: "0"
   def cast_color(c) when c > 1, do: "255"
   def cast_color(c), do: Integer.to_string(trunc(c * 255))
@@ -63,6 +74,10 @@ defmodule Raytracer.Canvas do
 
   def fill_path(path, canvas, color \\ @white) do
     run_for_pixel_group(path, canvas, fn coord, c -> set_pixel(c, coord, color) end)
+  end
+
+  def fill_big_path(path, canvas, color \\ @white) do
+    run_for_pixel_group(path, canvas, fn coord, c -> set_big_pixel(c, coord, color) end)
   end
 
   def run_for_pixel_group(group, canvas, function) do
